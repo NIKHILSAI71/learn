@@ -12,7 +12,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - N8N_WEBHOOK_URL=http://localhost:5678/webhook/learn
+      - N8N_WEBHOOK_URL=http://n8n-container:5678/webhook/learn
       - CODE_EXECUTION_TIMEOUT=${CODE_EXECUTION_TIMEOUT:-10000}
       - DEBUG_MODE=${DEBUG_MODE:-false}
     volumes:
@@ -24,11 +24,15 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - learn-network
+    external_links:
+      - n8n-container
 
 volumes:
   code-execution-temp:
     driver: local
 
 networks:
-  default:
-    name: learn-network
+  learn-network:
+    external: true

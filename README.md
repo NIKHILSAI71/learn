@@ -196,24 +196,69 @@ Before you begin, ensure you have the following installed:
 
 ### Using Docker Compose
 
-Create `docker-compose.yml`:
+For connecting with external n8n container, use the provided `docker-compose.yml`:
+
 ```yaml
-version: '3.8'
 services:
-  learn:
-    build: .
+  learn-app:
+    container_name: learn-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GITHUB_REPO_URL: https://github.com/NIKHILSAI71/Learn.git
+        BRANCH: master
+      no_cache: true
     ports:
       - "3000:3000"
     environment:
-      - N8N_WEBHOOK_URL=your_webhook_url
+      - NODE_ENV=production
+      - N8N_WEBHOOK_URL=http://n8n-container:5678/webhook/learn
+      - CODE_EXECUTION_TIMEOUT=${CODE_EXECUTION_TIMEOUT:-10000}
+      - DEBUG_MODE=${DEBUG_MODE:-false}
     volumes:
-      - ./src:/app/src
+      - code-execution-temp:/tmp/code-execution
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - learn-network
+    external_links:
+      - n8n-container
+
+volumes:
+  code-execution-temp:
+    driver: local
+
+networks:
+  learn-network:
+    external: true
 ```
 
-Run with:
-```bash
-docker-compose up
-```
+### Network Configuration
+
+The docker-compose.yml is configured to automatically connect to the `learn-network`. Before running:
+
+1. **Create the network**:
+   ```bash
+   docker network create learn-network
+   ```
+
+2. **Connect existing n8n container to the network**:
+   ```bash
+   docker network connect learn-network n8n-container
+   ```
+
+3. **Run the application**:
+   ```bash
+   docker-compose up
+   ```
+
+The application will automatically connect to the external `learn-network` and communicate with the n8n container using the hostname `n8n-container`.
 
 ## 📖 Usage Guide
 
@@ -330,33 +375,92 @@ Execute code in the specified programming language.
 
 ### n8n Webhook Setup
 
-Learn integrates with n8n for AI-powered question generation. Here's how to set it up:
+Learn integrates with n8n for AI-powered question generation. The application is configured to communicate with n8n containers via Docker networking.
 
-1. **Install n8n**
+#### Option 1: Existing n8n Container
+
+If you have an existing n8n container running:
+
+1. **Find your n8n container name**:
    ```bash
-   npm install n8n -g
-   n8n start
+   docker ps
    ```
 
-2. **Create Webhook Workflow**
-   - Open n8n at http://localhost:5678
-   - Create new workflow
+2. **Create shared network**:
+   ```bash
+   docker network create learn-network
+   ```
+
+3. **Connect n8n container to network**:
+   ```bash
+   docker network connect learn-network your-n8n-container-name
+   ```
+
+4. **Update webhook URL** in your n8n workflow to use container networking:
+   - Internal URL: `http://learn-app:3000/api/webhook`
+   - External URL: `http://localhost:3000/api/webhook`
+
+#### Option 2: New n8n Installation
+
+1. **Install n8n with Docker**:
+   ```bash
+   docker run -d \
+     --name n8n-container \
+     --network learn-network \
+     -p 5678:5678 \
+     -v n8n_data:/home/node/.n8n \
+     n8nio/n8n
+   ```
+
+2. **Access n8n**: Open http://localhost:5678
+
+3. **Create Webhook Workflow**:
    - Add Webhook node
-   - Configure webhook to receive POST requests
+   - Configure webhook to receive POST requests at `/webhook/learn`
    - Add AI integration (OpenAI, Claude, etc.)
    - Set up response formatting
 
-3. **Configure Response Format**
-   Ensure your n8n workflow returns the expected JSON structure shown in the API documentation.
+#### Testing the Connection
+
+Test the webhook connection from within the learn-app container:
+
+```bash
+docker exec learn-app node -e "
+const http = require('http');
+const data = JSON.stringify({language: 'python', topic: 'arrays'});
+const options = {
+  hostname: 'n8n-container',
+  port: 5678,
+  path: '/webhook/learn',
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'}
+};
+const req = http.request(options, (res) => {
+  console.log('Status:', res.statusCode);
+  res.on('data', (d) => console.log('Response:', d.toString()));
+});
+req.on('error', (e) => console.error('Error:', e.message));
+req.write(data);
+req.end();
+"
+```
 
 ### Environment Variables
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `N8N_WEBHOOK_URL` | n8n webhook endpoint for question generation | - | Yes |
+| `N8N_WEBHOOK_URL` | n8n webhook endpoint (use container name for Docker networking) | - | Yes |
 | `CODE_EXECUTION_TIMEOUT` | Maximum execution time (ms) | 10000 | No |
 | `DEBUG_MODE` | Enable debug logging | false | No |
 | `MAX_OUTPUT_LENGTH` | Maximum output characters | 10000 | No |
+
+#### Docker Networking URLs
+
+When running in Docker containers, use these URL patterns:
+
+- **Development/Local**: `http://localhost:5678/webhook/learn`
+- **Docker Compose**: `http://n8n-container:5678/webhook/learn`
+- **External n8n**: `http://your-n8n-container-name:5678/webhook/learn`
 
 ### Language Runtime Configuration
 
@@ -495,19 +599,36 @@ which java
 
 #### 2. n8n Webhook Issues
 
-**Problem**: Questions not generating
+**Problem**: Questions not generating or network connection failed
 
 **Solutions**:
-- Verify n8n is running on correct port
-- Check webhook URL configuration
-- Ensure webhook returns proper JSON format
-- Test webhook manually with curl
+- Verify n8n container is running: `docker ps`
+- Check if containers are on same network: `docker network ls`
+- Ensure webhook URL uses container name: `http://n8n-container:5678/webhook/learn`
+- Test webhook manually from within learn-app container
 
-**Example Test**:
+**Network Connection Test**:
 ```bash
-curl -X POST http://localhost:5678/webhook-test/your-id \
+# Check if containers can communicate
+docker exec learn-app ping n8n-container
+
+# Test webhook endpoint
+docker exec learn-app curl -X POST \
   -H "Content-Type: application/json" \
-  -d '{"language":"python","topic":"arrays"}'
+  -d '{"language":"python","topic":"arrays"}' \
+  http://n8n-container:5678/webhook/learn
+```
+
+**Network Troubleshooting**:
+```bash
+# List networks
+docker network ls
+
+# Inspect network details
+docker network inspect learn-network
+
+# Connect container to network
+docker network connect learn-network container-name
 ```
 
 #### 3. Monaco Editor Issues
