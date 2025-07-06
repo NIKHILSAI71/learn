@@ -1,0 +1,151 @@
+{
+  "name": "Learn-AI",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "learn",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3c553705-026b-4f5a-92fe-136f838c2171",
+      "name": "Webhook",
+      "webhookId": "3f145128-4610-430c-90a9-8a3ef63b29e8"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a coding problem for the programming language {{ $json.body.language }}, focusing on the topic {{ $json.body.topic }}, with a difficulty level of {{ $json.body.difficulty }}. The problem should resemble those found on CodeChef or HackerRank, including a title, description, input/output format, sample input/output, and constraints. Ensure the problem is concise, clear, and appropriate for the specified difficulty.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an expert coding problem generator, similar to platforms like Code Chef and Hacker Rank. Your task is to create a single, well-structured coding issue based on the provided programming language, topic, and difficulty level. The problem should include:\n\n\nProblem Title: A concise and descriptive title.\n\n\nProblem Description: A clear explanation of the problem, including the task and any relevant context.\n\n\nInput Format: Description of the input, including data types and constraints.\n\n\nOutput Format: Description of the expected output.\n\n\nSample Input and Output: At least one example with input and corresponding output.\n\n\nConstraints: Specific constraints on input values (e.g., array size, value ranges).\n\n\nDifficulty Level: Ensure the problem aligns with the specified difficulty (easy, medium, hard).\n\n\nProgramming Language: Provide a solution template or considerations for the specified language (e.g., Python).\n\n\nTopic: The problem must focus on the specified topic (e.g., arrays).\n\n\nIt is imperative that the problem be clear, engaging, and suitable for competitive programming practice, similar to a narrative. Avoid generating multiple problems unless explicitly requested. Format the output in Markdown for clarity.\n\n\nAvoid providing the user with the complete code; instead, simply define the function and display the last print statement in between, write comments like “Add your code here” or “Use this logic here” etc."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        220,
+        0
+      ],
+      "id": "83a6d3b9-e0ad-430a-983a-f7089e664f56",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        260,
+        220
+      ],
+      "id": "ddf02379-5fd1-41fc-8982-27849d183567",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "QH8WtMgD1CTzX2ts",
+          "name": "Gemini-models"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"title\": \"Counting Divisible Pairs\",\n  \"difficulty\": \"Medium\",\n  \"description\": \"Given an array A of N integers and an integer K, find the number of pairs (i, j) where i < j and (A[i] + A[j]) is divisible by K.\",\n  \"input\": {\n    \"format\": \"First line: two integers N and K. Second line: N integers representing array A.\",\n    \"constraints\": [\n      \"1 <= N <= 10^5\",\n      \"1 <= K <= 10^3\",\n      \"0 <= A[i] <= 10^9\"\n    ]\n  },\n  \"output\": {\n    \"format\": \"A single integer representing the count of valid pairs.\"\n  },\n  \"sample\": {\n    \"input\": {\n      \"N\": 5,\n      \"K\": 3,\n      \"A\": [1, 2, 3, 4, 5]\n    },\n    \"output\": 4,\n    \"explanation\": \"Pairs: (1,2) -> 3, (1,5) -> 6, (2,4) -> 6, (4,5) -> 9 are divisible by 3.\"\n  },\n  \"sample_code\": {\n    \"language\": \"Python\",\n    \"code\": \"def count_divisible_pairs(N, K, A):\\n    # Your code here\\n    pass\\n\\n# Read input\\nN, K = map(int, input().split())\\nA = list(map(int, input().split()))\\n\\n# Call function and print output\\nresult = count_divisible_pairs(N, K, A)\\nprint(result)\"\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        440,
+        220
+      ],
+      "id": "c69529c0-0262-4d4e-a2c5-86f2a384e02a",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        580,
+        0
+      ],
+      "id": "24adad2c-d97c-4f90-a76f-dbd1814b4972",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1
+  },
+  "versionId": "76068073-0fc8-418a-a86d-cc32930b3a18",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b48197e36684bec6623afd67de032e28fa4f0137a9bb417de4d951c324f80fe7"
+  },
+  "id": "pItTiRBsLKuMsHWy",
+  "tags": []
+}

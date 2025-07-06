@@ -445,15 +445,6 @@ req.end();
 "
 ```
 
-### Environment Variables
-
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `N8N_WEBHOOK_URL` | n8n webhook endpoint (use container name for Docker networking) | - | Yes |
-| `CODE_EXECUTION_TIMEOUT` | Maximum execution time (ms) | 10000 | No |
-| `DEBUG_MODE` | Enable debug logging | false | No |
-| `MAX_OUTPUT_LENGTH` | Maximum output characters | 10000 | No |
-
 #### Docker Networking URLs
 
 When running in Docker containers, use these URL patterns:
@@ -462,25 +453,21 @@ When running in Docker containers, use these URL patterns:
 - **Docker Compose**: `http://n8n-container:5678/webhook/learn`
 - **External n8n**: `http://your-n8n-container-name:5678/webhook/learn`
 
-### Language Runtime Configuration
+## 🔗 n8n Workflow Integration
 
-Ensure the following commands work in your environment:
+This project uses an n8n workflow for AI-powered coding problem generation. The workflow is defined in [`n8n-workflow/Learn-AI.json`](n8n-workflow/Learn-AI.json) and includes:
 
-```bash
-# Python
-python --version  # Should be 3.8+
+- A webhook endpoint to receive problem generation requests from the app
+- An LLM chain to generate competitive programming problems based on language, topic, and difficulty
+- Structured output parsing for consistent problem formatting
+- Integration with Google Gemini or other LLM providers
 
-# Java
-javac -version   # Should be 11+
-java -version
+**How it works:**
+1. The app sends a POST request to the n8n webhook with the selected language, topic, and difficulty.
+2. The workflow generates a problem in a format similar to CodeChef/HackerRank, including title, description, input/output, constraints, and sample cases.
+3. The response is parsed and returned to the app for display.
 
-# Node.js
-node --version   # Should be 16+
-
-# GCC (for C/C++)
-gcc --version
-g++ --version
-```
+To customize or extend the workflow, edit `n8n-workflow/Learn-AI.json` in the repository and import it into your n8n instance.
 
 ## 🚀 Deployment
 
