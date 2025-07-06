@@ -18,10 +18,15 @@ WORKDIR /app
 
 # Clone the repository from GitHub
 ARG GITHUB_REPO_URL=https://github.com/NIKHILSAI71/Learn.git
-ARG BRANCH=main
+ARG BRANCH=master
 
-# Clone the repository
-RUN git clone -b ${BRANCH} ${GITHUB_REPO_URL} .
+# Clone the repository (try specified branch first, fallback to main/master)
+RUN git clone ${GITHUB_REPO_URL} temp_repo && \
+    cd temp_repo && \
+    (git checkout ${BRANCH} 2>/dev/null || git checkout main 2>/dev/null || git checkout master) && \
+    cp -r . ../ && \
+    cd .. && \
+    rm -rf temp_repo
 
 # Install dependencies
 RUN npm ci --only=production
@@ -62,9 +67,11 @@ RUN npm ci --only=production && npm cache clean --force
 
 # Copy built application from builder stage
 COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/next.config.ts ./
 COPY --from=builder --chown=nextjs:nodejs /app/src ./src
+
+# Create public directory and copy if it exists
+RUN mkdir -p ./public
 
 # Create temp directory for code execution with proper permissions
 RUN mkdir -p /tmp/code-execution && \

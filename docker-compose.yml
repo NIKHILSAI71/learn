@@ -7,12 +7,12 @@ services:
       dockerfile: Dockerfile
       args:
         GITHUB_REPO_URL: https://github.com/NIKHILSAI71/Learn.git
-        BRANCH: main
+        BRANCH: master
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678/webhook-test/your-webhook-id}
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678/webhook/learn}
       - CODE_EXECUTION_TIMEOUT=${CODE_EXECUTION_TIMEOUT:-10000}
       - DEBUG_MODE=${DEBUG_MODE:-false}
     volumes:
