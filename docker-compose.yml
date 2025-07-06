@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  learn-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GITHUB_REPO_URL: https://github.com/NIKHILSAI71/Learn.git
+        BRANCH: main
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678/webhook-test/your-webhook-id}
+      - CODE_EXECUTION_TIMEOUT=${CODE_EXECUTION_TIMEOUT:-10000}
+      - DEBUG_MODE=${DEBUG_MODE:-false}
+    volumes:
+      # Mount temp directory for code execution
+      - code-execution-temp:/tmp/code-execution
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Include n8n service for complete setup
+  n8n:
+    image: n8nio/n8n:latest
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-admin123}
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+    volumes:
+      - n8n-data:/home/node/.n8n
+    restart: unless-stopped
+    profiles:
+      - full-stack
+
+volumes:
+  code-execution-temp:
+    driver: local
+  n8n-data:
+    driver: local
+
+networks:
+  default:
+    name: learn-network
