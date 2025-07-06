@@ -10,7 +10,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Language, Question } from '@/types';
-import { executeCodeInteractive, sendInput, stopSession, executeTerminalCommand } from '@/lib/api';
+import { executeCodeInteractive, stopSession } from '@/lib/api';
 import { LANGUAGES } from '@/constants';
 
 interface CodingPlaygroundProps {
@@ -123,60 +123,6 @@ export default function CodingPlayground({
     }
   };
 
-  const handleTerminalInput = async (input: string) => {
-    if (currentSessionId) {
-      try {
-        await sendInput(currentSessionId, input);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to send input';
-        addTerminalMessage(`Error: ${errorMessage}`, 'error');
-      }
-    } else {
-      await handleTerminalCommand(input);
-    }
-  };
-
-  const handleTerminalCommand = async (input: string) => {
-    if (input === 'clear') {
-      if (terminalRef.current) {
-        terminalRef.current.clear();
-      }
-    } else if (input === 'help') {
-      addTerminalMessage('Available commands:\n  clear - Clear terminal\n  help - Show this help\n  exit - Stop current session');
-    } else if (input === 'exit' && currentSessionId) {
-      try {
-        await stopSession(currentSessionId);
-        setCurrentSessionId(null);
-        addTerminalMessage('Session stopped');
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to stop session';
-        addTerminalMessage(`Error: ${errorMessage}`, 'error');
-      }
-    } else {
-      try {
-        addTerminalMessage(`Executing: ${input}`);
-        const result = await executeTerminalCommand(input);
-        
-        if (result.stdout) {
-          addTerminalMessage(result.stdout);
-        }
-        if (result.stderr) {
-          addTerminalMessage(result.stderr, 'error');
-        }
-        if (!result.success) {
-          addTerminalMessage(`Command failed with exit code ${result.exitCode}`, 'error');
-        }
-        if (!result.stdout && !result.stderr && result.success) {
-          addTerminalMessage('Command executed successfully (no output)');
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to execute command';
-        addTerminalMessage(`Error: ${errorMessage}`, 'error');
-      }
-    }
-  };
-
-
   const toggleOutputCollapse = () => {
     setIsOutputCollapsed(!isOutputCollapsed);
   };
@@ -203,10 +149,33 @@ export default function CodingPlayground({
         languages={LANGUAGES}
       />
 
-      <div className="flex-1 min-h-0">
-        <ResizablePanelGroup direction="vertical">
-          <ResizablePanel defaultSize={70} minSize={30}>
-            <div className="h-full p-4">
+      <div className="flex-1 min-h-0 flex flex-col">
+        {!isOutputCollapsed ? (
+          <ResizablePanelGroup direction="vertical">
+            <ResizablePanel defaultSize={70} minSize={30}>
+              <div className="h-full p-4">
+                <div className="h-full rounded-lg border border-border overflow-hidden">
+                  <CodeEditor
+                    language={selectedLanguage}
+                    code={code}
+                    onChange={setCode}
+                  />
+                </div>
+              </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={30} minSize={20}>
+              <InteractiveTerminal
+                ref={terminalRef}
+                isCollapsed={isOutputCollapsed}
+                onToggleCollapse={toggleOutputCollapse}
+                isExecuting={isExecuting}
+              />
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        ) : (
+          <div className="flex flex-col h-full">
+            <div className="flex-1 p-4">
               <div className="h-full rounded-lg border border-border overflow-hidden">
                 <CodeEditor
                   language={selectedLanguage}
@@ -215,19 +184,16 @@ export default function CodingPlayground({
                 />
               </div>
             </div>
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={30} minSize={20}>
-            <InteractiveTerminal
-              ref={terminalRef}
-              isCollapsed={isOutputCollapsed}
-              onToggleCollapse={toggleOutputCollapse}
-              height={300}
-              onInput={handleTerminalInput}
-              isExecuting={isExecuting}
-            />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+            <div className="flex-shrink-0">
+              <InteractiveTerminal
+                ref={terminalRef}
+                isCollapsed={isOutputCollapsed}
+                onToggleCollapse={toggleOutputCollapse}
+                isExecuting={isExecuting}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
