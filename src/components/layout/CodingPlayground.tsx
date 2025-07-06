@@ -4,11 +4,14 @@ import { useState, useEffect, useRef } from 'react';
 import ControlsBar from '@/components/editor/ControlsBar';
 import CodeEditor from '@/components/editor/CodeEditor';
 import InteractiveTerminal, { TerminalRef } from '@/components/terminal/InteractiveTerminal';
-import ResizeHandle from '@/components/layout/ResizeHandle';
-import { useResize } from '@/hooks/useResize';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import { Language, Question } from '@/types';
 import { executeCodeInteractive, sendInput, stopSession, executeTerminalCommand } from '@/lib/api';
-import { LANGUAGES, DEFAULT_VALUES } from '@/constants';
+import { LANGUAGES } from '@/constants';
 
 interface CodingPlaygroundProps {
   selectedLanguage: Language;
@@ -23,14 +26,9 @@ export default function CodingPlayground({
 }: CodingPlaygroundProps) {
   const [code, setCode] = useState<string>('');
   const [isExecuting, setIsExecuting] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState<number>(DEFAULT_VALUES.SIDEBAR_WIDTH);
-  const [outputHeight, setOutputHeight] = useState<number>(DEFAULT_VALUES.OUTPUT_HEIGHT);
-  const [isResizing, setIsResizing] = useState(false);
-  const [isResizingOutput, setIsResizingOutput] = useState(false);
   const [isOutputCollapsed, setIsOutputCollapsed] = useState(false);
-  const [activeOutputTab, setActiveOutputTab] = useState<'terminal' | 'debug'>('terminal');
-  const [executionTimeout, setExecutionTimeout] = useState<number>(DEFAULT_VALUES.EXECUTION_TIMEOUT);
-  const [memoryLimit, setMemoryLimit] = useState<number>(DEFAULT_VALUES.MEMORY_LIMIT);
+  const [executionTimeout, setExecutionTimeout] = useState<number>(10);
+  const [memoryLimit, setMemoryLimit] = useState<number>(128000);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,21 +40,6 @@ export default function CodingPlayground({
       setCode('');
     }
   }, [currentQuestion]);
-
-  const {
-    startResizing,
-    startResizingOutput,
-    rightPanelRef
-  } = useResize({
-    sidebarWidth,
-    setSidebarWidth,
-    outputHeight,
-    setOutputHeight,
-    isResizing,
-    setIsResizing,
-    isResizingOutput,
-    setIsResizingOutput
-  });
 
   const terminalRef = useRef<TerminalRef>(null);
 
@@ -86,7 +69,7 @@ export default function CodingPlayground({
       try {
         await stopSession(currentSessionId);
         setCurrentSessionId(null);
-      } catch (error) {
+      } catch {
         // Session cleanup failed silently
       }
     }
@@ -110,19 +93,26 @@ export default function CodingPlayground({
       
       addTerminalMessage(`\nExecution completed in ${result.time}s`);
       
-      if (result.debug_info && typeof window !== 'undefined' && (window as any).terminal) {
-        (window as any).terminal.updateDebugInfo({
-          line: result.debug_info.currentLine,
-          variables: result.debug_info.variables,
-          stack: result.debug_info.stack,
+      if (result.debug_info && typeof window !== 'undefined' && (window as unknown as { terminal?: unknown }).terminal) {
+        ((window as unknown as { terminal: {
+          updateDebugInfo: (info: {
+            line: number;
+            variables: Record<string, unknown>;
+            stack: string[];
+            state: string;
+          }) => void;
+        } }).terminal).updateDebugInfo({
+          line: (result.debug_info as { currentLine: number }).currentLine,
+          variables: (result.debug_info as { variables: Record<string, unknown> }).variables,
+          stack: (result.debug_info as { stack: string[] }).stack,
           state: 'stopped'
         });
       }
       
       if (result.interactive && result.session_id) {
         setCurrentSessionId(result.session_id);
-        if (typeof window !== 'undefined' && (window as any).terminal) {
-          (window as any).terminal.requestInput();
+        if (typeof window !== 'undefined' && (window as unknown as { terminal?: unknown }).terminal) {
+          ((window as unknown as { terminal: { requestInput: () => void } }).terminal).requestInput();
         }
       }
     } catch (error) {
@@ -186,34 +176,6 @@ export default function CodingPlayground({
     }
   };
 
-  const handleDebugAction = async (action: 'start' | 'stop' | 'step' | 'continue' | 'restart') => {
-    try {
-      switch (action) {
-        case 'start':
-          await handleRunCode();
-          break;
-        case 'stop':
-          if (currentSessionId) {
-            await stopSession(currentSessionId);
-            setCurrentSessionId(null);
-          }
-          break;
-        case 'restart':
-          if (currentSessionId) {
-            await stopSession(currentSessionId);
-          }
-          await handleRunCode();
-          break;
-        default:
-          if (typeof window !== 'undefined' && (window as any).terminal) {
-            (window as any).terminal.addDebug(`Debug action: ${action}`);
-          }
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Debug action failed';
-      addTerminalMessage(`Error: ${errorMessage}`, 'error');
-    }
-  };
 
   const toggleOutputCollapse = () => {
     setIsOutputCollapsed(!isOutputCollapsed);
@@ -228,7 +190,7 @@ export default function CodingPlayground({
   }, [currentSessionId]);
 
   return (
-    <div ref={rightPanelRef} className="flex-1 h-full flex flex-col min-w-0">
+    <div className="h-full flex flex-col">
       <ControlsBar
         selectedLanguage={selectedLanguage}
         onLanguageChange={handleLanguageChange}
@@ -241,34 +203,32 @@ export default function CodingPlayground({
         languages={LANGUAGES}
       />
 
-      <div className="flex-1 flex flex-col p-4 min-h-0">
-        <div className="flex-1 min-h-0 rounded-lg border border-border overflow-hidden">
-          <CodeEditor
-            language={selectedLanguage}
-            code={code}
-            onChange={setCode}
-          />
-        </div>
+      <div className="flex-1 min-h-0">
+        <ResizablePanelGroup direction="vertical">
+          <ResizablePanel defaultSize={70} minSize={30}>
+            <div className="h-full p-4">
+              <div className="h-full rounded-lg border border-border overflow-hidden">
+                <CodeEditor
+                  language={selectedLanguage}
+                  code={code}
+                  onChange={setCode}
+                />
+              </div>
+            </div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={30} minSize={20}>
+            <InteractiveTerminal
+              ref={terminalRef}
+              isCollapsed={isOutputCollapsed}
+              onToggleCollapse={toggleOutputCollapse}
+              height={300}
+              onInput={handleTerminalInput}
+              isExecuting={isExecuting}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
-
-      {!isOutputCollapsed && (
-        <ResizeHandle 
-          onMouseDown={startResizingOutput} 
-          direction="vertical" 
-        />
-      )}
-
-      <InteractiveTerminal
-        ref={terminalRef}
-        isCollapsed={isOutputCollapsed}
-        onToggleCollapse={toggleOutputCollapse}
-        activeTab={activeOutputTab}
-        onTabChange={setActiveOutputTab}
-        height={outputHeight}
-        onInput={handleTerminalInput}
-        isExecuting={isExecuting}
-        onDebugAction={handleDebugAction}
-      />
     </div>
   );
 }

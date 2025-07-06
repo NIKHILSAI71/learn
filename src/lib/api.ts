@@ -32,7 +32,7 @@ export const executeCodeInteractive = async (
   inputData?: string, 
   debugMode?: boolean, 
   sessionId?: string
-): Promise<ExecutionResult & { interactive?: boolean; session_id?: string; debug_info?: any }> => {
+): Promise<ExecutionResult & { interactive?: boolean; session_id?: string; debug_info?: unknown }> => {
   try {
     const response = await axios.post('/api/execute-interactive', {
       source_code: code,
@@ -52,7 +52,13 @@ export const executeCodeInteractive = async (
   }
 };
 
-export const executeTerminalCommand = async (command: string): Promise<any> => {
+export const executeTerminalCommand = async (command: string): Promise<{
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+  executionTime: number;
+  success: boolean;
+}> => {
   try {
     const response = await axios.post('/api/execute-interactive', {
       terminal_command: command

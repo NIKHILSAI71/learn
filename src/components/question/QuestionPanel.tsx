@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Combobox } from '@/components/ui/combobox';
 import {
   Select,
   SelectContent,
@@ -11,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Clipboard, Check } from 'lucide-react';
 import { Topic, Question, Difficulty } from '@/types';
 
@@ -21,89 +22,72 @@ interface QuestionPanelProps {
   isLoading: boolean;
 }
 
-const topics: Topic[] = [
-  'Arrays',
-  'Strings',
-  'Dynamic Programming',
-  'Graphs',
-  'Trees',
-  'Sorting',
-  'Searching',
-  'Hash Tables',
-  'Linked Lists',
-  'Stack and Queue',
-  'Custom',
+const topics = [
+  { value: 'Arrays', label: 'Arrays' },
+  { value: 'Strings', label: 'Strings' },
+  { value: 'Dynamic Programming', label: 'Dynamic Programming' },
+  { value: 'Graphs', label: 'Graphs' },
+  { value: 'Trees', label: 'Trees' },
+  { value: 'Sorting', label: 'Sorting' },
+  { value: 'Searching', label: 'Searching' },
+  { value: 'Hash Tables', label: 'Hash Tables' },
+  { value: 'Linked Lists', label: 'Linked Lists' },
+  { value: 'Stack and Queue', label: 'Stack and Queue' },
+  { value: 'Custom', label: 'Custom' },
 ];
 
-const difficulties: Difficulty[] = ['Beginner', 'Easy', 'Medium', 'Hard', 'Expert'];
+const difficulties = ['Beginner', 'Easy', 'Medium', 'Hard', 'Expert'];
 
-const SkeletonLine = ({ className = '', delay = 0 }: { className?: string; delay?: number }) => (
-  <div 
-    className={`relative overflow-hidden bg-gradient-to-r from-gray-800/40 via-gray-700/60 to-gray-800/40 bg-[length:200%_100%] rounded ${className}`}
-    style={{ 
-      animation: `shimmerWave 2s ease-in-out infinite ${delay}s`,
-    }}
-  >
-    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmerGlow_2s_ease-in-out_infinite] translate-x-[-100%]" />
-  </div>
-);
+
 
 const QuestionSkeleton = () => (
   <div className="space-y-6 p-4">
     <div className="space-y-3">
-      <SkeletonLine className="h-7 w-4/5" delay={0} />
-      <SkeletonLine className="h-5 w-20" delay={0.1} />
+      <Skeleton className="h-8 w-3/4" />
+      <Skeleton className="h-4 w-16" />
     </div>
     
     <div className="space-y-3">
-      <SkeletonLine className="h-5 w-24" delay={0.2} />
+      <Skeleton className="h-6 w-32" />
       <div className="space-y-2">
-        <SkeletonLine className="h-4 w-full" delay={0.3} />
-        <SkeletonLine className="h-4 w-full" delay={0.35} />
-        <SkeletonLine className="h-4 w-3/4" delay={0.4} />
-        <SkeletonLine className="h-4 w-5/6" delay={0.45} />
-        <SkeletonLine className="h-4 w-full" delay={0.5} />
-        <SkeletonLine className="h-4 w-2/3" delay={0.55} />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-4 w-2/5" />
+        <Skeleton className="h-3 w-3/4" />
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-3 w-5/6" />
       </div>
     </div>
     
     <div className="space-y-3">
-      <SkeletonLine className="h-5 w-28" delay={0.6} />
+      <Skeleton className="h-6 w-20" />
       <div className="space-y-2">
-        <SkeletonLine className="h-4 w-full" delay={0.65} />
-        <SkeletonLine className="h-4 w-4/5" delay={0.7} />
-        <SkeletonLine className="h-4 w-3/4" delay={0.75} />
+        <Skeleton className="h-3 w-4/5" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-3 w-2/3" />
       </div>
     </div>
     
     <div className="space-y-4">
-      <SkeletonLine className="h-5 w-24" delay={0.8} />
-      <div className="space-y-4">
-        <div className="p-4 space-y-3 border border-gray-600/30 rounded-lg bg-gray-900/20">
-          <SkeletonLine className="h-4 w-3/4" delay={0.85} />
-          <SkeletonLine className="h-4 w-2/3" delay={0.9} />
-          <SkeletonLine className="h-4 w-full" delay={0.95} />
-        </div>
-        <div className="p-4 space-y-3 border border-gray-600/30 rounded-lg bg-gray-900/20">
-          <SkeletonLine className="h-4 w-4/5" delay={1.0} />
-          <SkeletonLine className="h-4 w-3/4" delay={1.05} />
-          <SkeletonLine className="h-4 w-5/6" delay={1.1} />
-        </div>
+      <Skeleton className="h-6 w-28" />
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-3/5" />
+        <Skeleton className="h-3 w-5/6" />
+        <Skeleton className="h-4 w-2/3" />
       </div>
     </div>
     
     <div className="space-y-3">
-      <SkeletonLine className="h-5 w-32" delay={1.15} />
+      <Skeleton className="h-6 w-24" />
       <div className="p-4 border border-gray-600/30 rounded-lg bg-gray-900/20 space-y-2">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <SkeletonLine 
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton 
             key={i} 
-            className={`h-3 ${i % 3 === 0 ? 'w-1/2' : i % 3 === 1 ? 'w-3/4' : 'w-full'}`} 
-            delay={1.2 + i * 0.05} 
+            className={`h-3 ${i % 5 === 0 ? 'w-2/5' : i % 5 === 1 ? 'w-4/5' : i % 5 === 2 ? 'w-1/2' : i % 5 === 3 ? 'w-3/4' : 'w-3/5'}`} 
           />
         ))}
       </div>
     </div>
+
   </div>
 );
 
@@ -112,8 +96,8 @@ export default function QuestionPanel({
   onGenerateQuestion,
   isLoading,
 }: QuestionPanelProps) {
-  const [selectedTopic, setSelectedTopic] = useState<Topic>('Arrays');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('Medium');
+  const [selectedTopic, setSelectedTopic] = useState<string>('Arrays');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('Medium');
   const [customTopic, setCustomTopic] = useState('');
   const [isCopied, setIsCopied] = useState(false);
   const [dots, setDots] = useState('.');
@@ -153,7 +137,7 @@ export default function QuestionPanel({
 
   const handleGenerate = () => {
     const topicToUse = selectedTopic === 'Custom' ? customTopic : selectedTopic;
-    onGenerateQuestion(topicToUse as Topic, selectedDifficulty);
+    onGenerateQuestion(topicToUse as Topic, selectedDifficulty as Difficulty);
   };
 
   const handleCopy = () => {
@@ -173,22 +157,14 @@ export default function QuestionPanel({
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Topic</label>
-            <Select value={selectedTopic} onValueChange={(value: Topic) => setSelectedTopic(value)}>
-              <SelectTrigger className="w-full bg-input border-border text-foreground">
-                <SelectValue placeholder="Select a topic" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border">
-                {topics.map((topic) => (
-                  <SelectItem 
-                    key={topic} 
-                    value={topic}
-                    className="text-popover-foreground focus:bg-accent focus:text-accent-foreground"
-                  >
-                    {topic}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={topics}
+              value={selectedTopic}
+              onValueChange={(value) => setSelectedTopic(value)}
+              placeholder="Select a topic"
+              searchPlaceholder="Search topics..."
+              emptyText="No topic found."
+            />
             
             {selectedTopic === 'Custom' && (
               <input
@@ -250,7 +226,7 @@ export default function QuestionPanel({
                     <ReactMarkdown 
                       remarkPlugins={[remarkGfm]}
                       components={{
-                        h1: (props: any) => (
+                        h1: (props) => (
                           <div>
                             <h1 className="text-2xl font-bold text-foreground mb-4" {...props}>{props.children}</h1>
                             {question.difficulty && (
@@ -262,18 +238,18 @@ export default function QuestionPanel({
                             )}
                           </div>
                         ),
-                        h2: (props: any) => <h2 className="text-lg font-semibold text-foreground mb-3 mt-6" {...props}>{props.children}</h2>,
-                        h3: (props: any) => <h3 className="text-md font-semibold text-foreground mb-2 mt-4" {...props}>{props.children}</h3>,
-                        h4: (props: any) => <h4 className="text-sm font-semibold text-foreground mb-2" {...props}>{props.children}</h4>,
-                        p: (props: any) => <p className="text-sm text-foreground mb-4 leading-relaxed" {...props}>{props.children}</p>,
-                        strong: (props: any) => <strong className="font-semibold text-foreground" {...props}>{props.children}</strong>,
-                        em: (props: any) => <em className="italic text-foreground" {...props}>{props.children}</em>,
-                        ul: (props: any) => <ul className="list-disc list-inside text-sm text-foreground space-y-2 mb-4 ml-4" {...props}>{props.children}</ul>,
-                        ol: (props: any) => <ol className="list-decimal list-inside text-sm text-foreground space-y-2 mb-4 ml-4" {...props}>{props.children}</ol>,
-                        li: (props: any) => <li className="text-foreground mb-1" {...props}>{props.children}</li>,
-                        code: (props: any) => <code className="bg-gray-700/80 text-gray-100 px-2 py-1 rounded text-xs font-mono border border-gray-600/50" {...props}>{props.children}</code>,
-                        pre: (props: any) => <pre className="bg-gray-800/90 text-gray-100 p-4 rounded-lg text-sm font-mono overflow-x-auto mb-4 border border-gray-600/50 shadow-inner" {...props}>{props.children}</pre>,
-                        blockquote: (props: any) => <blockquote className="border-l-4 border-gray-500 pl-4 italic text-gray-300 mb-4 bg-gray-800/30 py-2 rounded-r" {...props}>{props.children}</blockquote>,
+                        h2: (props) => <h2 className="text-lg font-semibold text-foreground mb-3 mt-6" {...props}>{props.children}</h2>,
+                        h3: (props) => <h3 className="text-md font-semibold text-foreground mb-2 mt-4" {...props}>{props.children}</h3>,
+                        h4: (props) => <h4 className="text-sm font-semibold text-foreground mb-2" {...props}>{props.children}</h4>,
+                        p: (props) => <p className="text-sm text-foreground mb-4 leading-relaxed" {...props}>{props.children}</p>,
+                        strong: (props) => <strong className="font-semibold text-foreground" {...props}>{props.children}</strong>,
+                        em: (props) => <em className="italic text-foreground" {...props}>{props.children}</em>,
+                        ul: (props) => <ul className="list-disc list-inside text-sm text-foreground space-y-2 mb-4 ml-4" {...props}>{props.children}</ul>,
+                        ol: (props) => <ol className="list-decimal list-inside text-sm text-foreground space-y-2 mb-4 ml-4" {...props}>{props.children}</ol>,
+                        li: (props) => <li className="text-foreground mb-1" {...props}>{props.children}</li>,
+                        code: (props) => <code className="bg-gray-700/80 text-gray-100 px-2 py-1 rounded text-xs font-mono border border-gray-600/50" {...props}>{props.children}</code>,
+                        pre: (props) => <pre className="bg-gray-800/90 text-gray-100 p-4 rounded-lg text-sm font-mono overflow-x-auto mb-4 border border-gray-600/50 shadow-inner" {...props}>{props.children}</pre>,
+                        blockquote: (props) => <blockquote className="border-l-4 border-gray-500 pl-4 italic text-gray-300 mb-4 bg-gray-800/30 py-2 rounded-r" {...props}>{props.children}</blockquote>,
                       }}
                     >
                       {typeof question.description === 'string' ? question.description : JSON.stringify(question.description, null, 2)}
@@ -309,8 +285,8 @@ export default function QuestionPanel({
                                 <ReactMarkdown 
                                   remarkPlugins={[remarkGfm]}
                                   components={{
-                                    p: (props: any) => <p className="text-sm text-foreground leading-relaxed" {...props}>{props.children}</p>,
-                                    code: (props: any) => <code className="bg-gray-700/80 text-gray-100 px-2 py-1 rounded text-xs font-mono border border-gray-600/50" {...props}>{props.children}</code>,
+                                    p: (props) => <p className="text-sm text-foreground leading-relaxed" {...props}>{props.children}</p>,
+                                    code: (props) => <code className="bg-gray-700/80 text-gray-100 px-2 py-1 rounded text-xs font-mono border border-gray-600/50" {...props}>{props.children}</code>,
                                   }}
                                 >
                                   {example.explanation}
@@ -364,7 +340,7 @@ export default function QuestionPanel({
                 </svg>
               </div>
               <p className="text-muted-foreground text-center max-w-sm mx-auto leading-relaxed">
-                Select a topic and difficulty level above, then click "Generate" to create your coding challenge.
+                Select a topic and difficulty level above, then click &quot;Generate&quot; to create your coding challenge.
               </p>
             </div>
           </div>

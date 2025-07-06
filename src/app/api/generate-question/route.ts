@@ -1,6 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
+interface QuestionData {
+  title?: string;
+  description?: string;
+  input?: {
+    format?: string;
+    constraints?: string[];
+  };
+  output?: {
+    format?: string;
+  };
+  sample?: {
+    input?: Record<string, unknown> | string;
+    output?: unknown;
+    explanation?: string;
+  };
+  sample_code?: {
+    language?: string;
+    code?: string;
+  };
+  difficulty?: string;
+}
+
+interface ProcessedQuestion {
+  title: string;
+  description: string;
+  constraints: string;
+  examples: Array<{
+    input: string;
+    output: string;
+    explanation?: string;
+  }>;
+  difficulty: string;
+  sampleCode: {
+    language: string;
+    code: string;
+  } | null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { language, topic, difficulty } = await request.json();
@@ -34,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     const responseData = response.data;
 
-    function processQuestionData(questionData: any) {
+    function processQuestionData(questionData: QuestionData): ProcessedQuestion {
       let description = '';
       
       if (questionData.title) {
@@ -51,7 +89,7 @@ export async function POST(request: NextRequest) {
       
       if (questionData.input?.constraints && Array.isArray(questionData.input.constraints)) {
         description += '## Constraints\n' + questionData.input.constraints
-          .map((c: any) => `- ${c}`)
+          .map((c: string) => `- ${c}`)
           .join('\n') + '\n\n';
       }
       
@@ -66,8 +104,8 @@ export async function POST(request: NextRequest) {
         
         if (questionData.sample.input) {
           if (typeof questionData.sample.input === 'object') {
-            const inputObj = questionData.sample.input;
-            let inputLines = [];
+            const inputObj = questionData.sample.input as Record<string, unknown>;
+            const inputLines: string[] = [];
             
             if (inputObj.N !== undefined) {
               if (inputObj.K !== undefined) {
@@ -144,7 +182,7 @@ export async function POST(request: NextRequest) {
       const questionData = responseData[0].output;
       
       if (questionData && typeof questionData === 'object') {
-        let actualQuestionData = questionData.description || questionData;
+        const actualQuestionData = questionData.description || questionData;
         
         if (typeof actualQuestionData === 'object' && actualQuestionData !== null) {
           return NextResponse.json(processQuestionData(actualQuestionData));

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
@@ -16,14 +16,13 @@ export async function GET() {
       }
     };
 
-    return NextResponse.json(healthStatus, { status: 200 });
-  } catch (error) {
+    return NextResponse.json(healthStatus, { status: 200 });  } catch {
     return NextResponse.json(
       { 
         status: 'unhealthy', 
         error: 'Health check failed',
         timestamp: new Date().toISOString()
-      }, 
+      },
       { status: 500 }
     );
   }

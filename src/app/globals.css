@@ -86,17 +86,6 @@ html, body {
   padding: 0;
 }
 
-.resize-handle {
-  width: 4px;
-  background: var(--border);
-  cursor: col-resize;
-  transition: background-color 0.2s ease;
-}
-
-.resize-handle:hover {
-  background: var(--primary);
-}
-
 .scrollbar-custom {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
@@ -158,15 +147,6 @@ html, body {
   }
   50% {
     transform: rotate(0.5deg);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
   }
 }
 
@@ -308,4 +288,31 @@ html, body {
 .markdown-content th {
   background-color: var(--muted);
   font-weight: 600;
+}
+
+/* Terminal custom scrollbar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-track-muted::-webkit-scrollbar-track {
+  background-color: hsl(var(--muted));
+}
+
+.scrollbar-thumb-muted-foreground::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground));
+  border-radius: 0.25rem;
+}
+
+.scrollbar-thumb-muted-foreground::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.8);
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-corner {
+  background-color: transparent;
 }

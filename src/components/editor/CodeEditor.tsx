@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { Language } from '@/types';
+import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
 interface CodeEditorProps {
   language: Language;
@@ -42,9 +43,9 @@ const languageMap: Record<Language, string> = {
 };
 
 export default function CodeEditor({ language, code, onChange }: CodeEditorProps) {
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
 
-  const handleEditorDidMount = (editor: any, monaco: any) => {
+  const handleEditorDidMount = (editor: Monaco.editor.IStandaloneCodeEditor, monaco: typeof Monaco) => {
     editorRef.current = editor;
     
     // Define a modern dark theme optimized for coding
@@ -102,12 +103,10 @@ export default function CodeEditor({ language, code, onChange }: CodeEditorProps
     // Add keyboard shortcuts
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       // Save functionality (placeholder)
-      console.log('Save shortcut pressed');
     });
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       // Run code shortcut (placeholder)
-      console.log('Run code shortcut pressed');
     });
   };
 

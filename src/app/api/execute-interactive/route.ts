@@ -7,6 +7,40 @@ import { tmpdir } from 'os';
 const TIMEOUT_MS = 30000;
 const activeProcesses = new Map<string, ChildProcess>();
 
+interface LanguageConfig {
+  command: string;
+  args: string[];
+  filename?: string | null;
+  interactive?: boolean;
+  cleanup?: string[];
+  runCommand?: string;
+  runArgs?: string[];
+}
+
+interface ExecutionResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+  executionTime: number;
+  interactive?: boolean;
+  sessionId?: string;
+  debugInfo?: DebugInfo | null;
+}
+
+interface DebugInfo {
+  currentLine: number;
+  variables: Record<string, unknown>;
+  stack: string[];
+}
+
+interface TerminalResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+  executionTime: number;
+  success: boolean;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { source_code, language, input_data, debug_mode, session_id, terminal_command } = await request.json();
@@ -29,7 +63,7 @@ export async function POST(request: NextRequest) {
         try {
           process.stdin.write(input_data + '\n');
           return NextResponse.json({ status: 'input_sent' });
-        } catch (error) {
+        } catch {
           return NextResponse.json(
             { error: 'Failed to send input to process' },
             { status: 500 }
@@ -56,12 +90,21 @@ async function executeCode(
   inputData?: string, 
   debugMode?: boolean, 
   sessionId?: string
-): Promise<any> {
+): Promise<{
+  stdout: string;
+  stderr: string;
+  status: { id: number; description: string };
+  time: string;
+  memory: number;
+  interactive: boolean;
+  session_id?: string;
+  debug_info?: unknown;
+}> {
   const tempDir = join(tmpdir(), 'code-execution');
   
   try {
     mkdirSync(tempDir, { recursive: true });
-  } catch (e) {
+  } catch {
     // Directory might already exist
   }
 
@@ -112,21 +155,21 @@ async function executeCode(
     if (filePath && !debugMode) {
       try {
         unlinkSync(filePath);
-      } catch (e) {}
+      } catch {}
     }
     
     if (config.cleanup && !debugMode) {
       config.cleanup.forEach((file: string) => {
         try {
           unlinkSync(join(tempDir, file));
-        } catch (e) {}
+        } catch {}
       });
     }
   }
 }
 
-function getLanguageConfig(language: string, code: string, tempDir: string, timestamp: number, debugMode?: boolean) {
-  const configs: Record<string, any> = {
+function getLanguageConfig(language: string, code: string, tempDir: string, timestamp: number, debugMode?: boolean): LanguageConfig | null {
+  const configs: Record<string, LanguageConfig> = {
     // Interpreted Languages
     'Python': {
       command: 'python',
@@ -390,7 +433,7 @@ async function runCommand(
   inputData?: string, 
   debugMode?: boolean, 
   sessionId?: string
-): Promise<any> {
+): Promise<ExecutionResult> {
   return new Promise((resolve) => {
     const startTime = Date.now();
     const actualSessionId = sessionId || `session_${Date.now()}`;
@@ -480,12 +523,12 @@ async function runCommand(
 }
 
 async function executeCompiledLanguage(
-  config: any, 
+  config: LanguageConfig, 
   tempDir: string, 
   inputData?: string, 
   debugMode?: boolean, 
   sessionId?: string
-): Promise<any> {
+): Promise<ExecutionResult> {
   const compileResult = await runCommand(config.command, config.args, tempDir);
   
   if (compileResult.exitCode !== 0) {
@@ -499,10 +542,21 @@ async function executeCompiledLanguage(
     };
   }
 
+  if (!config.runCommand || !config.runArgs) {
+    return {
+      stdout: '',
+      stderr: 'Invalid compiled language configuration',
+      exitCode: 1,
+      executionTime: 0,
+      interactive: false,
+      sessionId: sessionId || `session_${Date.now()}`
+    };
+  }
+
   return await runCommand(config.runCommand, config.runArgs, tempDir, inputData, debugMode, sessionId);
 }
 
-function parseDebugInfo(stderr: string) {
+function parseDebugInfo(stderr: string): DebugInfo | null {
   const debugLines = stderr.split('\n').filter(line => line.includes('DEBUG:'));
   const lastDebugLine = debugLines[debugLines.length - 1];
   
@@ -520,7 +574,7 @@ function parseDebugInfo(stderr: string) {
   return null;
 }
 
-async function executeTerminalCommand(command: string): Promise<any> {
+async function executeTerminalCommand(command: string): Promise<TerminalResult> {
   return new Promise((resolve) => {
     const startTime = Date.now();
     

@@ -1,13 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import {
   Dialog,
   DialogContent,
@@ -48,22 +42,14 @@ export default function ControlsBar({
         {/* Language Selector */}
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-foreground whitespace-nowrap">Language:</label>
-          <Select value={selectedLanguage} onValueChange={onLanguageChange}>
-            <SelectTrigger className="w-32 bg-input border-border text-foreground">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-popover border-border">
-              {languages.map((language) => (
-                <SelectItem 
-                  key={language} 
-                  value={language}
-                  className="text-popover-foreground focus:bg-accent focus:text-accent-foreground"
-                >
-                  {language}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            options={languages.map(lang => ({ value: lang, label: lang }))}
+            value={selectedLanguage}
+            onValueChange={(value) => onLanguageChange(value as Language)}
+            placeholder="Select language"
+            searchPlaceholder="Search languages..."
+            emptyText="No language found."
+          />
         </div>
 
         <div className="flex items-center gap-2">
@@ -76,7 +62,7 @@ export default function ControlsBar({
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Advanced Settings</DialogTitle>
+                <DialogTitle>Settings</DialogTitle>
                 <DialogDescription>
                   Configure execution parameters for your code.
                 </DialogDescription>
@@ -88,7 +74,7 @@ export default function ControlsBar({
                     type="number"
                     value={executionTimeout}
                     onChange={(e) => setExecutionTimeout(Number(e.target.value))}
-                    className="w-full mt-1 px-3 py-2 text-sm bg-input border border-border rounded-md"
+                    className="w-full mt-1 px-3 py-2 text-sm bg-input border border-border rounded-md [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-inner-spin-button]:m-0 [-moz-appearance:textfield]"
                     min="1"
                     max="30"
                   />
@@ -99,7 +85,7 @@ export default function ControlsBar({
                     type="number"
                     value={memoryLimit}
                     onChange={(e) => setMemoryLimit(Number(e.target.value))}
-                    className="w-full mt-1 px-3 py-2 text-sm bg-input border border-border rounded-md"
+                    className="w-full mt-1 px-3 py-2 text-sm bg-input border border-border rounded-md [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-inner-spin-button]:m-0 [-moz-appearance:textfield]"
                     min="16000"
                     max="512000"
                     step="1000"

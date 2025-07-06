@@ -33,7 +33,7 @@ export interface ExecutionResult {
 
 export interface DebugInfo {
   currentLine: number;
-  variables: Record<string, any>;
+  variables: Record<string, unknown>;
   stack: string[];
   state?: 'running' | 'paused' | 'stopped';
 }
