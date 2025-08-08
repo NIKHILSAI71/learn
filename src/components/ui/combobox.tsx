@@ -56,6 +56,12 @@ export function Combobox({
           aria-expanded={open}
           className={cn("w-full justify-between text-left", className)}
           disabled={disabled}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              setOpen(true);
+            }
+          }}
         >
           <span className="truncate">
             {value
@@ -67,7 +73,7 @@ export function Combobox({
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput autoFocus placeholder={searchPlaceholder} />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
@@ -77,6 +83,10 @@ export function Combobox({
                   value={option.value}
                   onSelect={(currentValue) => {
                     onValueChange?.(currentValue === value ? "" : currentValue)
+                    setOpen(false)
+                  }}
+                  onClick={() => {
+                    onValueChange?.(option.value === value ? "" : option.value)
                     setOpen(false)
                   }}
                 >
