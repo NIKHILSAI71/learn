@@ -1,10 +1,7 @@
 import { Language } from '@/types';
 
 export const LANGUAGES: Language[] = [
-  'Python', 'Java', 'JavaScript', 'TypeScript', 'C', 'C++', 'C#',
-  'Go', 'Rust', 'PHP', 'Ruby', 'Swift', 'Kotlin', 'Scala',
-  'R', 'MATLAB', 'SQL', 'HTML', 'CSS', 'JSON', 'XML',
-  'Shell', 'PowerShell', 'Perl', 'Lua', 'Dart', 'Elixir'
+  'Python', 'Java', 'JavaScript', 'TypeScript', 'C', 'C++', 'C#'
 ];
 
 export const DEFAULT_VALUES = {
