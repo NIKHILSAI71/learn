@@ -18,6 +18,7 @@ export default function DocsPage() {
         <nav className="flex items-center space-x-6">
           <Link href="/" className="text-white hover:text-gray-300">Home</Link>
           <Link href="/docs" className="text-white hover:text-gray-300 font-bold">Docs</Link>
+          <Link href="/community" className="text-white hover:text-gray-300">Community</Link>
           <Link href="/pricing" className="text-white hover:text-gray-300">Pricing</Link>
         </nav>
       </header>
