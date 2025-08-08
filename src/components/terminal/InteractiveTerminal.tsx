@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
-import { Terminal, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
+import { Terminal, Trash2, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 
 interface TerminalLine {
   type: 'output' | 'input' | 'error' | 'success' | 'warning' | 'info';
@@ -36,12 +36,7 @@ const InteractiveTerminal = forwardRef<TerminalRef, InteractiveTerminalProps>(({
 
   useEffect(() => {
     setIsClient(true);
-    setLines([{
-      type: 'info', 
-      content: 'Terminal ready',
-      timestamp: Date.now(),
-      id: Math.random().toString(36).substr(2, 9)
-    }]);
+    setLines([{ type: 'info', content: 'Terminal ready', timestamp: Date.now(), id: Math.random().toString(36).substr(2, 9) }]);
   }, []);
 
   useEffect(() => {
@@ -49,6 +44,22 @@ const InteractiveTerminal = forwardRef<TerminalRef, InteractiveTerminalProps>(({
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
   }, [lines]);
+
+  const generateId = () => Math.random().toString(36).substr(2, 9);
+
+  const addLine = useCallback((line: Omit<TerminalLine, 'timestamp' | 'id'>) => {
+    const newLine: TerminalLine = {
+      ...line,
+      timestamp: Date.now(),
+      id: generateId()
+    };
+    setLines(prev => [...prev, newLine]);
+  }, []);
+
+  const clearTerminal = useCallback(() => {
+    setLines([]);
+    addLine({ type: 'info', content: 'Terminal cleared' });
+  }, [addLine]);
 
   // Expose terminal methods through ref
   useImperativeHandle(ref, () => ({
@@ -83,24 +94,7 @@ const InteractiveTerminal = forwardRef<TerminalRef, InteractiveTerminalProps>(({
       }
     },
     clear: clearTerminal
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), []);
-
-  const generateId = () => Math.random().toString(36).substr(2, 9);
-
-  const addLine = useCallback((line: Omit<TerminalLine, 'timestamp' | 'id'>) => {
-    const newLine: TerminalLine = {
-      ...line,
-      timestamp: Date.now(),
-      id: generateId()
-    };
-    setLines(prev => [...prev, newLine]);
-  }, []);
-
-  const clearTerminal = useCallback(() => {
-    setLines([]);
-    addLine({ type: 'info', content: 'Terminal cleared' });
-  }, [addLine]);
+  }), [addLine, clearTerminal]);
 
   const getLineIcon = (type: TerminalLine['type']) => {
     switch (type) {
@@ -189,22 +183,20 @@ const InteractiveTerminal = forwardRef<TerminalRef, InteractiveTerminalProps>(({
               </span>
             )}
           </div>
-          <ChevronUp size={16} className="text-muted-foreground" />
+          <PanelLeftOpen size={16} strokeWidth={2} className="text-foreground transform -rotate-90" />
         </button>
       </div>
     );
   }
 
   return (
-    <div 
-      className="border-t border-border bg-background text-foreground font-mono flex flex-col h-full"
-    >
+    <div className="border-t border-border bg-background text-foreground font-mono flex flex-col h-full">
       {/* Simple header */}
       <div className="px-4 py-2 border-b border-border bg-card backdrop-blur flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Terminal size={16} className="text-primary" />
-            <span className="text-primary font-medium text-sm">Output</span>
+            <span className="text-primary font-medium text-sm">Terminal</span>
             {isExecuting && (
               <div className="flex items-center gap-1 bg-destructive/20 px-2 py-1 rounded">
                 <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
@@ -223,10 +215,10 @@ const InteractiveTerminal = forwardRef<TerminalRef, InteractiveTerminalProps>(({
             </button>
             <button
               onClick={onToggleCollapse}
-              className="text-muted-foreground hover:text-foreground hover:bg-accent p-1 rounded"
-              title="Collapse"
+              className="text-foreground hover:bg-accent p-1 rounded"
+              title="Collapse terminal"
             >
-              <ChevronDown size={16} />
+              <PanelLeftClose size={16} strokeWidth={2} className="text-foreground transform -rotate-90" />
             </button>
           </div>
         </div>
@@ -274,5 +266,4 @@ const InteractiveTerminal = forwardRef<TerminalRef, InteractiveTerminalProps>(({
 });
 
 InteractiveTerminal.displayName = 'InteractiveTerminal';
-
 export default InteractiveTerminal;
