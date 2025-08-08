@@ -186,6 +186,16 @@ html, body {
   }
 }
 
+/* Shiny text animation */
+@keyframes shiny-x {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.animate-shiny {
+  animation: shiny-x var(--shiny-duration, 2.2s) linear infinite;
+}
+
 /* Custom Markdown Styles */
 .markdown-content {
   color: var(--muted-foreground);
