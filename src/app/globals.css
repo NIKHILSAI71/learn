@@ -326,3 +326,23 @@ html, body {
 .scrollbar-thin::-webkit-scrollbar-corner {
   background-color: transparent;
 }
+
+/* Aurora CSS animation */
+@keyframes aurora-drift {
+  0%, 100% {
+    transform: translate(0%, 0%) scale(1) rotate(0deg);
+    filter: hue-rotate(0deg);
+  }
+  25% {
+    transform: translate(5%, -3%) scale(1.05) rotate(45deg);
+    filter: hue-rotate(30deg);
+  }
+  50% {
+    transform: translate(-3%, 5%) scale(0.95) rotate(90deg);
+    filter: hue-rotate(60deg);
+  }
+  75% {
+    transform: translate(7%, 2%) scale(1.02) rotate(135deg);
+    filter: hue-rotate(30deg);
+  }
+}
