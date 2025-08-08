@@ -37,10 +37,10 @@ export default function ControlsBar({
   languages
 }: ControlsBarProps) {
   return (
-    <div className="p-4 border-b border-border bg-card">
-      <div className="flex flex-wrap items-center gap-4 justify-between">
+    <div className="p-3 sm:p-4 border-b border-border bg-card">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4 justify-between">
         {/* Language Selector */}
-        <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-none">
           <label className="text-sm font-medium text-foreground whitespace-nowrap">Language:</label>
           <Combobox
             options={languages.map(lang => ({ value: lang, label: lang }))}
@@ -49,14 +49,15 @@ export default function ControlsBar({
             placeholder="Select language"
             searchPlaceholder="Search languages..."
             emptyText="No language found."
+            className="w-[40px] sm:w-[800px] lg:w-[120px]"
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {/* Settings Modal */}
           <Dialog>
             <DialogTrigger asChild>
-              <button className="p-2 text-white hover:text-gray-300 transition-colors">
+              <button className="p-2 text-white hover:text-gray-300 transition-colors active:scale-[0.98]">
                 <Settings size={20} />
               </button>
             </DialogTrigger>
@@ -99,7 +100,7 @@ export default function ControlsBar({
           <Button
             onClick={onRunCode}
             disabled={isExecuting}
-            className="bg-white text-black hover:bg-gray-200 disabled:opacity-50 flex items-center gap-2"
+            className="bg-white text-black hover:bg-gray-200 disabled:opacity-50 flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2"
           >
             {isExecuting ? (
               <Loader2 size={16} className="animate-spin" />
