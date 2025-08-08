@@ -26,6 +26,7 @@ export default function PricingPage() {
         <nav className="flex items-center space-x-6">
           <Link href="/" className="text-white hover:text-gray-300">Home</Link>
           <Link href="/docs" className="text-white hover:text-gray-300">Docs</Link>
+          <Link href="/community" className="text-white hover:text-gray-300">Community</Link>
           <Link href="/pricing" className="text-white hover:text-gray-300 font-bold">Pricing</Link>
         </nav>
       </header>
